@@ -38,10 +38,10 @@ export function mergeProgress(base: ProgressState, incoming: ProgressState): Pro
   return { version: 1, days };
 }
 
-export function loadProgress(): ProgressState {
+export function loadProgress(key: string = STORAGE_KEY): ProgressState {
   if (typeof window === "undefined") return emptyProgress();
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return emptyProgress();
     const parsed: unknown = JSON.parse(raw);
     return parseProgress(parsed) ?? emptyProgress();
@@ -50,10 +50,10 @@ export function loadProgress(): ProgressState {
   }
 }
 
-export function saveProgress(state: ProgressState): void {
+export function saveProgress(state: ProgressState, key: string = STORAGE_KEY): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(key, JSON.stringify(state));
   } catch {
     /* 隐私模式或空间不足时静默失败，保证页面可用 */
   }

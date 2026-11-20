@@ -26,6 +26,7 @@ type Props = {
   stats: Stats;
   lists: TaskList[];
   progress: ProgressState;
+  workspaceName?: string;
   onImport: (incoming: ProgressState) => void;
   onClose: () => void;
   onReset: () => void;
@@ -38,6 +39,7 @@ export function AchievementSheet({
   stats,
   lists,
   progress,
+  workspaceName,
   onImport,
   onClose,
   onReset,
@@ -80,6 +82,7 @@ export function AchievementSheet({
     const payload = {
       app: "WeTask",
       version: 1,
+      workspace: workspaceName ?? "我的打卡",
       exportedAt: new Date().toISOString(),
       days: progress.days,
     };
@@ -137,8 +140,14 @@ export function AchievementSheet({
           <h2 id="ach-title" className="text-[16px] font-semibold tracking-tight">
             我的成就
           </h2>
-          <p className="mt-0.5 text-[11.5px] text-ink-faint">
-            {formatDateLabel(stats.today)} · 只保存在这台设备
+          <p className="mt-0.5 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
+            {formatDateLabel(stats.today)}
+            <span className="text-line-strong">·</span>
+            {workspaceName ? (
+              <span className="font-medium text-ink-soft">{workspaceName}</span>
+            ) : null}
+            <span className="text-line-strong">·</span>
+            只保存在这台设备
           </p>
         </div>
         <button
