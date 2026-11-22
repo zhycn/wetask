@@ -7,6 +7,7 @@ import { AchievementSheet } from "./achievement-sheet";
 import { BrandMark } from "./brand-mark";
 import { FilterBar, type Filters } from "./filter-bar";
 import { HelpDialog } from "./help-dialog";
+import { HiddenDialog } from "./hidden-dialog";
 import { Hero } from "./hero";
 import { IconDice, IconTrophy } from "./icons";
 import { ListBoard } from "./list-board";
@@ -15,10 +16,12 @@ import { TaskPicker } from "./task-picker";
 import { TodayStrip } from "./today-strip";
 import { WorkspaceDialog } from "./workspace-dialog";
 import { Toaster, type ToastPayload } from "./toast";
+import { useHidden } from "@/hooks/use-hidden";
 import { useProgress } from "@/hooks/use-progress";
 import { useStoredState } from "@/hooks/use-stored-state";
 import { useWorkspaces } from "@/hooks/use-workspaces";
 import { useTheme } from "@/hooks/use-theme";
+import { isTaskHidden } from "@/lib/hidden-store";
 import { DAILY_GOAL } from "@/lib/constants";
 import { formatDateLabel, greeting } from "@/lib/date";
 
@@ -30,6 +33,7 @@ export function WeTaskApp() {
   const { state, stats, doneToday, toggle, reset, importProgress } = useProgress();
   const { theme, toggle: toggleTheme } = useTheme();
   const spaces = useWorkspaces();
+  const hidden = useHidden();
 
   const [filters, setFilters] = useStoredState<Filters>("wetask.filters.v1", EMPTY_FILTERS);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -38,6 +42,7 @@ export function WeTaskApp() {
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [workspacesOpen, setWorkspacesOpen] = useState(false);
+  const [hiddenOpen, setHiddenOpen] = useState(false);
   const [toast, setToast] = useState<(ToastPayload & { id: number }) | null>(null);
 
   const toastTimer = useRef<number | null>(null);
@@ -69,21 +74,42 @@ export function WeTaskApp() {
     const query = filters.query.trim().toLowerCase();
     return taskLists
       .filter((list) => filters.category === "all" || filters.category === list.id)
-      .map((list) => ({
-        list,
-        tasks: list.tasks.filter((task) => {
-          if (filters.hideDone && doneToday.has(task.id)) return false;
-          if (filters.maxMin !== null && task.estMin > filters.maxMin) return false;
-          if (!query) return true;
-          return (
-            task.title.toLowerCase().includes(query) ||
-            (task.hint ?? "").toLowerCase().includes(query) ||
-            list.name.toLowerCase().includes(query)
-          );
-        }),
-      }))
-      .filter((entry) => entry.tasks.length > 0);
-  }, [filters, doneToday]);
+      .map((list) => {
+        const pool = list.tasks.filter((task) => !hidden.set.has(task.id));
+        return {
+          list,
+          total: pool.length,
+          doneInList: pool.filter((task) => doneToday.has(task.id)).length,
+          tasks: pool.filter((task) => {
+            if (filters.hideDone && doneToday.has(task.id)) return false;
+            if (filters.maxMin !== null && task.estMin > filters.maxMin) return false;
+            if (!query) return true;
+            return (
+              task.title.toLowerCase().includes(query) ||
+              (task.hint ?? "").toLowerCase().includes(query) ||
+              list.name.toLowerCase().includes(query)
+            );
+          }),
+        };
+      })
+      .filter((entry) => entry.total > 0 && entry.tasks.length > 0);
+  }, [filters, doneToday, hidden.set]);
+
+  const totalPool = useMemo(
+    () => taskLists.reduce((sum, list) => sum + list.tasks.length, 0),
+    [],
+  );
+
+  const availableTotal = useMemo(
+    () =>
+      taskLists.reduce(
+        (sum, list) => sum + list.tasks.filter((task) => !hidden.set.has(task.id)).length,
+        0,
+      ),
+    [hidden.set],
+  );
+
+  const hiddenCount = totalPool - availableTotal;
 
   const todayCompleted = useMemo(() => {
     if (!stats.today) return [];
@@ -104,6 +130,7 @@ export function WeTaskApp() {
         .filter((list) => target === "all" || list.id === target)
         .flatMap((list) =>
           list.tasks
+            .filter((task) => !isTaskHidden(task.id))
             .filter((task) => filters.maxMin === null || task.estMin <= filters.maxMin)
             .map((task) => ({ task, list })),
         );
@@ -200,6 +227,18 @@ export function WeTaskApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openPicker, pickerOpen, achievementsOpen]);
 
+  const handleHidePick = useCallback(() => {
+    if (!pick) return;
+    const task = pick.task;
+    hidden.hide(task.id);
+    notify({
+      message: `已屏蔽「${task.title}」`,
+      actionLabel: "撤销",
+      action: () => hidden.unhide(task.id),
+    });
+    draw(pickerCategory);
+  }, [draw, hidden, notify, pick, pickerCategory]);
+
   const handleReset = useCallback(() => {
     reset();
     notify("打卡记录已清空");
@@ -243,7 +282,7 @@ export function WeTaskApp() {
           currentStreak={stats.currentStreak}
           totalCheckins={stats.totalCheckins}
           yesterdayCount={stats.yesterdayCount}
-          totalTasks={taskLists.reduce((sum, list) => sum + list.tasks.length, 0)}
+          totalTasks={availableTotal}
           listCount={taskLists.length}
           dateLabel={stats.today ? formatDateLabel(stats.today) : "今天"}
           greeting={stats.today ? greeting(new Date()) : "你好"}
@@ -255,7 +294,7 @@ export function WeTaskApp() {
           lists={taskLists}
           filters={filters}
           visibleCount={visibleCount}
-          totalCount={taskLists.reduce((sum, list) => sum + list.tasks.length, 0)}
+          totalCount={availableTotal}
           doneCount={stats.todayDone}
           onChange={setFilters}
         />
@@ -273,6 +312,8 @@ export function WeTaskApp() {
           onToggle={handleToggle}
           onPickFromList={(listId) => openPicker(listId)}
           onResetFilters={() => setFilters(EMPTY_FILTERS)}
+          hiddenCount={hiddenCount}
+          onManageHidden={() => setHiddenOpen(true)}
         />
 
         <footer className="mt-14 border-t border-line/70 pt-8 pb-8 sm:pb-12">
@@ -328,6 +369,12 @@ export function WeTaskApp() {
         onClose={() => setPickerOpen(false)}
         onReroll={() => draw(pickerCategory, pick?.task.id)}
         onComplete={handleCompletePick}
+        onHide={handleHidePick}
+        hiddenCount={hiddenCount}
+        onOpenHidden={() => {
+          setPickerOpen(false);
+          setHiddenOpen(true);
+        }}
         onOpenAchievements={() => {
           setPickerOpen(false);
           setAchievementsOpen(true);
@@ -340,6 +387,18 @@ export function WeTaskApp() {
               }
             : null
         }
+      />
+
+      <HiddenDialog
+        open={hiddenOpen}
+        lists={taskLists}
+        hiddenIds={hidden.ids}
+        onClose={() => setHiddenOpen(false)}
+        onUnhide={hidden.unhide}
+        onUnhideAll={() => {
+          hidden.unhideAll();
+          notify("已恢复全部被屏蔽的任务");
+        }}
       />
 
       <WorkspaceDialog
