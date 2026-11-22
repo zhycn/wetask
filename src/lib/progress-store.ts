@@ -88,6 +88,9 @@ export function switchProgressWorkspace(id: string) {
   activeId = id;
   snapshot = loadProgress(progressKeyFor(id));
   emit();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("wetask:workspace-changed"));
+  }
 }
 
 export function currentWorkspaceId(): string {

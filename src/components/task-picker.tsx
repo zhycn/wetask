@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import type { MicroTask, TaskList } from "@/data/types";
 import { Modal } from "./modal";
-import { IconCheck, IconClose, IconDice, IconSparkle } from "./icons";
+import { IconCheck, IconClose, IconDice, IconEyeOff, IconSparkle } from "./icons";
 import { withAlpha } from "@/lib/utils";
 
 type Pick = { task: MicroTask; list: TaskList } | null;
@@ -17,6 +17,9 @@ type Props = {
   onComplete: () => void;
   onOpenAchievements: () => void;
   progress: { done: number; total: number } | null;
+  onHide: () => void;
+  hiddenCount: number;
+  onOpenHidden: () => void;
 };
 
 export function TaskPicker({
@@ -28,6 +31,9 @@ export function TaskPicker({
   onComplete,
   onOpenAchievements,
   progress,
+  onHide,
+  hiddenCount,
+  onOpenHidden,
 }: Props) {
   const color = pick?.list.color ?? "#e2552b";
 
@@ -132,6 +138,15 @@ export function TaskPicker({
                 完成，打卡
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={onHide}
+              className="mx-auto mt-3.5 flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[11.5px] text-ink-faint transition hover:bg-sunken/60 hover:text-ink"
+            >
+              <IconEyeOff className="h-3.5 w-3.5" />
+              不感兴趣，以后别再抽到
+            </button>
           </>
         ) : (
           <>
@@ -139,10 +154,10 @@ export function TaskPicker({
               id="picker-title"
               className="mt-5 text-[25px] leading-snug font-bold tracking-tight text-balance"
             >
-              {scopeLabel}的任务，今天都完成啦 🎉
+              这个范围暂时没有可抽的任务
             </h2>
             <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
-              已经很好了。要么换个领域，要么去看看今天的成果。
+              可能今天的都做完了，也可能被屏蔽了。换个领域，或者把屏蔽的任务放回来。
             </p>
             <div className="mt-7 flex gap-2.5">
               <button
@@ -161,6 +176,16 @@ export function TaskPicker({
                 看我的成就
               </button>
             </div>
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={onOpenHidden}
+                className="mx-auto mt-3.5 flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[11.5px] text-ink-faint transition hover:bg-sunken/60 hover:text-ink"
+              >
+                <IconEyeOff className="h-3.5 w-3.5" />
+                查看已屏蔽的 {hiddenCount} 项
+              </button>
+            )}
           </>
         )}
       </div>

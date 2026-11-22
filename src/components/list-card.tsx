@@ -9,6 +9,7 @@ type Props = {
   tasks: MicroTask[];
   doneToday: Set<string>;
   doneInList: number;
+  totalCount: number;
   index: number;
   onToggle: (taskId: string) => void;
   onPickFromList: (listId: string) => void;
@@ -19,11 +20,12 @@ export function ListCard({
   tasks,
   doneToday,
   doneInList,
+  totalCount,
   index,
   onToggle,
   onPickFromList,
 }: Props) {
-  const total = list.tasks.length;
+  const total = totalCount;
   const ratio = total === 0 ? 0 : doneInList / total;
 
   return (

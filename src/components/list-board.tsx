@@ -3,7 +3,12 @@
 import type { MicroTask, TaskList } from "@/data/types";
 import { ListCard } from "./list-card";
 
-type VisibleList = { list: TaskList; tasks: MicroTask[] };
+type VisibleList = {
+  list: TaskList;
+  tasks: MicroTask[];
+  total: number;
+  doneInList: number;
+};
 
 type Props = {
   visibleLists: VisibleList[];
@@ -12,6 +17,8 @@ type Props = {
   onToggle: (taskId: string) => void;
   onPickFromList: (listId: string) => void;
   onResetFilters: () => void;
+  hiddenCount: number;
+  onManageHidden: () => void;
 };
 
 export function ListBoard({
@@ -21,6 +28,8 @@ export function ListBoard({
   onToggle,
   onPickFromList,
   onResetFilters,
+  hiddenCount,
+  onManageHidden,
 }: Props) {
   return (
     <section aria-label="微任务清单" className="mt-8">
@@ -31,9 +40,20 @@ export function ListBoard({
             点一下就算打卡，再点一下可以撤销 · 每天零点重新开始
           </p>
         </div>
-        <span className="hidden text-[12px] text-ink-faint sm:block">
-          当前 <span className="num font-semibold text-ink-soft">{totalVisible}</span> 项可做
-        </span>
+        <div className="hidden items-center gap-3 text-[12px] text-ink-faint sm:flex">
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={onManageHidden}
+              className="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[11.5px] font-medium text-ink-soft transition hover:border-line-strong hover:text-ink"
+            >
+              已屏蔽 <span className="num">{hiddenCount}</span> 项 · 管理
+            </button>
+          )}
+          <span>
+            当前 <span className="num font-semibold text-ink-soft">{totalVisible}</span> 项可做
+          </span>
+        </div>
       </div>
 
       {visibleLists.length === 0 ? (
@@ -55,13 +75,14 @@ export function ListBoard({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleLists.map(({ list, tasks }, index) => (
+          {visibleLists.map(({ list, tasks, total, doneInList }, index) => (
             <ListCard
               key={list.id}
               list={list}
               tasks={tasks}
               doneToday={doneToday}
-              doneInList={list.tasks.filter((task) => doneToday.has(task.id)).length}
+              doneInList={doneInList}
+              totalCount={total}
               index={index}
               onToggle={onToggle}
               onPickFromList={onPickFromList}
