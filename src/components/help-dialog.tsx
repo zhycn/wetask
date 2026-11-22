@@ -114,6 +114,7 @@ export function HelpDialog({ open, onClose, onStart }: Props) {
 
         <p className="mt-4 text-[11.5px] leading-relaxed text-ink-faint">
           无需注册。打卡记录只保存在这台设备的浏览器里，不上传、不外发；可以在「我的成就 → 数据备份」里导出成文件。
+          同一台设备还可以建多个「空间」，家里人各用各的，记录彼此独立。
         </p>
       </div>
 

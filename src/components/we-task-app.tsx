@@ -13,9 +13,11 @@ import { ListBoard } from "./list-board";
 import { SiteHeader } from "./site-header";
 import { TaskPicker } from "./task-picker";
 import { TodayStrip } from "./today-strip";
+import { WorkspaceDialog } from "./workspace-dialog";
 import { Toaster, type ToastPayload } from "./toast";
 import { useProgress } from "@/hooks/use-progress";
 import { useStoredState } from "@/hooks/use-stored-state";
+import { useWorkspaces } from "@/hooks/use-workspaces";
 import { useTheme } from "@/hooks/use-theme";
 import { DAILY_GOAL } from "@/lib/constants";
 import { formatDateLabel, greeting } from "@/lib/date";
@@ -27,6 +29,7 @@ const EMPTY_FILTERS: Filters = { category: "all", maxMin: null, query: "", hideD
 export function WeTaskApp() {
   const { state, stats, doneToday, toggle, reset, importProgress } = useProgress();
   const { theme, toggle: toggleTheme } = useTheme();
+  const spaces = useWorkspaces();
 
   const [filters, setFilters] = useStoredState<Filters>("wetask.filters.v1", EMPTY_FILTERS);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -34,6 +37,7 @@ export function WeTaskApp() {
   const [pick, setPick] = useState<Pick>(null);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [workspacesOpen, setWorkspacesOpen] = useState(false);
   const [toast, setToast] = useState<(ToastPayload & { id: number }) | null>(null);
 
   const toastTimer = useRef<number | null>(null);
@@ -228,6 +232,9 @@ export function WeTaskApp() {
         onToggleTheme={toggleTheme}
         onOpenAchievements={() => setAchievementsOpen(true)}
         onOpenHelp={() => setHelpOpen(true)}
+        workspace={spaces.active}
+        workspaceCount={spaces.list.length}
+        onOpenWorkspaces={() => setWorkspacesOpen(true)}
       />
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-28 sm:px-6 sm:pb-10 lg:px-8">
@@ -335,6 +342,13 @@ export function WeTaskApp() {
         }
       />
 
+      <WorkspaceDialog
+        open={workspacesOpen}
+        onClose={() => setWorkspacesOpen(false)}
+        today={stats.today}
+        onToast={notify}
+      />
+
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} onStart={() => {
         setHelpOpen(false);
         openPicker();
@@ -345,6 +359,7 @@ export function WeTaskApp() {
         stats={stats}
         lists={taskLists}
         progress={state}
+        workspaceName={spaces.active?.name}
         onImport={importProgress}
         onClose={() => setAchievementsOpen(false)}
         onReset={handleReset}

@@ -206,6 +206,42 @@ export function IconEyeOff(props: IconProps) {
   );
 }
 
+export function IconChevronDown(props: IconProps) {
+  return (
+    <Base strokeWidth={2} {...props}>
+      <path d="m6 9.5 6 6 6-6" />
+    </Base>
+  );
+}
+
+export function IconPlus(props: IconProps) {
+  return (
+    <Base strokeWidth={2.2} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Base>
+  );
+}
+
+export function IconPencil(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 20h4.2L19 9.2a2.1 2.1 0 0 0 0-3L17.8 5a2.1 2.1 0 0 0-3 0L4 15.8V20Z" />
+      <path d="m13.5 6.5 4 4" />
+    </Base>
+  );
+}
+
+export function IconUsers(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+      <path d="M16 5.8a3 3 0 0 1 0 5.9" />
+      <path d="M17.5 14.8c1.9.6 3 2.2 3 4.7" />
+    </Base>
+  );
+}
+
 export function IconHelp(props: IconProps) {
   return (
     <Base {...props}>

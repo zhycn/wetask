@@ -3,6 +3,8 @@
 import { BrandMark } from "./brand-mark";
 import { IconHelp, IconMoon, IconSun, IconTrophy } from "./icons";
 import type { Theme } from "@/hooks/use-theme";
+import type { Workspace } from "@/lib/workspaces";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 type Props = {
   todayDone: number;
@@ -10,6 +12,9 @@ type Props = {
   onToggleTheme: () => void;
   onOpenAchievements: () => void;
   onOpenHelp: () => void;
+  workspace: Workspace | null;
+  workspaceCount: number;
+  onOpenWorkspaces: () => void;
 };
 
 export function SiteHeader({
@@ -18,6 +23,9 @@ export function SiteHeader({
   onToggleTheme,
   onOpenAchievements,
   onOpenHelp,
+  workspace,
+  workspaceCount,
+  onOpenWorkspaces,
 }: Props) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/80 backdrop-blur-xl">
@@ -31,6 +39,8 @@ export function SiteHeader({
             </span>
           </span>
         </a>
+
+        <WorkspaceSwitcher active={workspace} count={workspaceCount} onClick={onOpenWorkspaces} />
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <span
